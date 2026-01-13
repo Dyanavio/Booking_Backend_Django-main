@@ -6,7 +6,7 @@ from main.models import *
 from django.http import JsonResponse
 
 # Create your views here.
-
+#lol
 userAccessAccessor = UserAccessAccessor()
 accessTokenAccessor = AccessTokenAccessor()
 
