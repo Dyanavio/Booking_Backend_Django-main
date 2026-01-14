@@ -5,6 +5,11 @@ from backend.services import *
 from main.models import *
 from django.http import JsonResponse
 
+from .serializers import RealtySerializer
+from .filters import RealtyFilter
+from rest_framework.viewsets import ModelViewSet
+from django_filters.rest_framework import DjangoFilterBackend
+
 # Create your views here.
 #lol, lmao
 userAccessAccessor = UserAccessAccessor()
@@ -114,6 +119,12 @@ def item(request, itemId):
         raise Http404("Item not found")
 
 
+class RealtyViewSet(ModelViewSet):
+    queryset = Realty.objects.filter(deleted_at__isnull=True)
+    serializer_class = RealtySerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RealtyFilter
 
 
     

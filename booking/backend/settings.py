@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'main',
     'bootstrap5',
     'lucide',
-    "corsheaders"
+    "corsheaders",
+    "rest_framework",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
