@@ -1,9 +1,11 @@
-from django.shortcuts import render
-import base64
+import base64, json, re, datetime
 from django.http import HttpResponse, Http404
 from backend.services import *
 from main.models import *
+from main.rest import *
 from django.http import JsonResponse
+from typing import Dict, Any
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,15 +14,18 @@ from .serializers import *
 from .filters import *
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
-#lol, lmao
+
+passwordRegex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$")
+
 userAccessAccessor = UserAccessAccessor()
 accessTokenAccessor = AccessTokenAccessor()
 
 storageService = DiskStorageService()
 kdfService = PbKdfService()
 jwtService = JwtService()
+randomService = DefaultRandomService()
 
 @api_view(['GET'])
 def userDetail(request, login: str):
@@ -84,10 +89,8 @@ def login(request):
     try:
         userAccess = authenticate(request)
     except Exception as e:
-        return JsonResponse({
-            "status": 401,
-            "data": e.__str__()
-        }, status=401)
+        responseObj = RestResponse(status=RestStatus(False, 401, "Unauthorized"), data=jwt)
+        return JsonResponse(responseObj.to_dict(), safe=False)
     
     now = int(time.time())
     access_token = AccessToken(
@@ -96,7 +99,7 @@ def login(request):
         iat=str(now),
         exp=str(now + 100),
         iss="Booking_WEB",
-        aud=str(userAccess.role_id),
+        aud=str(userAccess.user_role.id),
         user_access=userAccess
     )
 
@@ -123,13 +126,82 @@ def login(request):
         "id": str(userAccess.id)
     }
 
-    return JsonResponse({
-        "Status": 200,
-        "Data": jwt
-    })
+    responseObj = RestResponse(status=RestStatus(True, 200, "Ok"), data=jwt)
+    return JsonResponse(responseObj.to_dict(), safe=False)
+
+@csrf_exempt
+def register(request):
+    data = json.loads(request.body) # UserSignupFormModel
+    errors = processSignUpData(data)
+    print(errors)
+    if errors.__len__() > 0:
+        responseObj = RestResponse(status=RestStatus(False, 400, "Bad Request"), data=data)
+        return JsonResponse(responseObj.to_dict(), safe=False) 
+
+    responseObj = RestResponse(status=RestStatus(True, 200, "Ok"), data="Registration successful")
+    return JsonResponse(responseObj.to_dict(), safe=False)
 
 
+def processSignUpData(model: Any) -> Dict[str, str]:
+    errors:Dict[str, str] = {}
+    
+    if not model["userFirstName"]:
+        errors["userFirstName"] = "First Name must not be empty!"
+        
+    if not model["userLastName"]:
+        errors["userLastName"] = "Last Name must not be empty!"
+        
+    if not model["userEmail"]:
+        errors["userEmail"] = "Email must not be empty!"
+        
+    if not model["userLogin"]:
+        errors["userLogin"] = "Login must not be empty!"
+    elif ":" in model["userLogin"]:
+        errors["userLogin"] = "Login must not contain ':'!"
+    if not model["userPassword"]:
+        errors["userPassword"] = "Password cannot be empty"
+        errors["userRepeat"] = "Invalid original password"
+    elif not passwordRegex.match(model["userPassword"]):
+        errors["userPassword"] = (
+            "Password must be at least 12 characters long and contain lower, "
+            "upper case letters, at least one number and at least one special character"
+        )
+        errors["userRepeat"] = "Invalid original password"
+    elif model["userRepeat"] != model["userPassword"]:
+        errors["userRepeat"] = "Passwords must match"
+    if not model["agree"]:
+        errors["agree"] = "You must agree with policies!"
+    if errors:
+        return errors
+    
+    user_id = uuid.uuid4()
+    user_data = UserData(
+        id = user_id,
+        first_name = model["userFirstName"],
+        last_name = model["userLastName"],
+        email = model["userEmail"],
+        birth_date = model["birthdate"],
+        registered_at = datetime.datetime.now(), 
+    )
+    salt = randomService.otp(12)
+    user_access = UserAccess(
+        id = uuid.uuid4(),
+        user_id = user_id,
+        login = model["userLogin"],
+        salt = salt,
+        dk = kdfService.dk(model["userPassword"], salt),
+        user_role = UserRole.objects.get(id="self_registered"),
+        user_data = user_data
+    )
 
+    try:
+        user_data.save()
+        user_access.save()
+        #self._user_data_accessor.create_async(user_data)
+        #self._user_access_accessor.create_async(user_access)
+    except Exception as e:
+        errors["user_login"] = "Login already exists"
+    return errors
 
 
 
@@ -151,8 +223,4 @@ class RealtyViewSet(ModelViewSet):
         if self.action == 'create':
             return RealtyCreateSerializer
         return RealtySerializer
-
-
-
     
-

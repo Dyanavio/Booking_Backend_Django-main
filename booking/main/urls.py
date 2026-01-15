@@ -9,13 +9,14 @@ router.register(r'api/realty', RealtyViewSet, basename='realty')
 urlpatterns = [
     path('api/user/<str:login>/', userDetail, name='userDetail'),
     path('api/auth/', login, name='login'), 
+    path('api/auth/register', register, name='auth_register'), #POST
 
     path('', include(router.urls)),
     path("Storage/Item/<str:itemId>", item, name="storageItem")
 ]
 
 
-#path('api/auth/register/', auth_register_view, name='auth_register'), #POST
+#
     #path('api/user/<str:login>/add-card/', add_card_view, name='add_card'), #POST
     #path('api/user/', user_create_view, name='user_create'), #POST
     #path('api/user/', user_update_view, name='user_update'), #PATCH

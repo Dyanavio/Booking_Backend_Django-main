@@ -26,20 +26,20 @@ class Command(BaseCommand):
 
     def seed_groups(self):
         groups = [
-            {
-                "id": UUID("f1ea6b3f-0021-417b-95c8-f6cd333d7207"),
-                "name": "Hotels",
-                "description": "Multi-room hotels",
-                "slug": "hotels",
-                "image_url": "hotel.jpg",
-            },
-            {
-                "id": UUID("8806ca58-8daa-4576-92ba-797de42ffaa7"),
-                "name": "Apartments",
-                "description": "Apartments",
-                "slug": "apartments",
-                "image_url": "apartment.jpg",
-            },
+            #{
+            #    "id": UUID("f1ea6b3f-0021-417b-95c8-f6cd333d7207"),
+            #    "name": "Hotels",
+            #    "description": "Multi-room hotels",
+            #    "slug": "hotels",
+            #    "image_url": "hotel.jpg",
+            #},
+            #{
+            #    "id": UUID("8806ca58-8daa-4576-92ba-797de42ffaa7"),
+            #    "name": "Apartments",
+            #    "description": "Apartments",
+            #    "slug": "apartments",
+            #    "image_url": "apartment.jpg",
+            #},
             {
                 "id": UUID("97191468-a02f-4a78-927b-9ea660e9ea36"),
                 "name": "Houses",
@@ -120,7 +120,8 @@ class Command(BaseCommand):
 
         user_data, _ = UserData.objects.get_or_create(
             email="admin@booking.local",
-            defaults={
+            defaults = {
+                "id": "99198e14-98ab-4147-a7be-d2d7bb7aa7c5",
                 "first_name": "Admin",
                 "last_name": "User",
                 "registered_at": datetime.utcnow(),
@@ -129,7 +130,8 @@ class Command(BaseCommand):
 
         UserAccess.objects.get_or_create(
             login="admin",
-            defaults={
+            defaults = {
+                "user_id": "99198e14-98ab-4147-a7be-d2d7bb7aa7c5",
                 "user_data": user_data,
                 "user_role": admin_role,
                 "salt": "seed",

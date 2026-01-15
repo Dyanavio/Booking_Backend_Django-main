@@ -4,7 +4,7 @@ from main.models import *
 from pathlib import Path
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-import hashlib, hmac, base64, json
+import hashlib, hmac, base64, json, random
 
 # SERVICES
 
@@ -24,6 +24,18 @@ class PbKdfService(IKdfService):
     
     def hash(self, input:str) -> str:
         return hashlib.sha1(input.encode('utf-8')).hexdigest().upper()
+    
+class IRandomService(ABC):
+    @abstractmethod
+    def otp(length: int) -> str:
+        pass
+
+class DefaultRandomService(IRandomService):
+    def __init__(self):
+        self._random = random.Random(time.time())
+
+    def otp(self, length: int) -> str:
+        return "".join(str(self._random.randint(0, 9)) for _ in range(length))
 
 
 class IJwtService(ABC):
@@ -154,8 +166,9 @@ class UserAccessAccessor:
     def getUserAccessByLogin(selfm, userLogin: str, isEditable: bool = False) -> UserAccess:
         bookings = Prefetch('bookingitems', queryset=BookingItem.objects.filter(deleted_at__isnull=True))
         feedbacks = Prefetch('feedbacks', queryset=Feedback.objects.filter(deleted_at__isnull=True))
-        
-        query = UserAccess.objects.select_related('user_data', "user_role").prefetch_related(bookings, feedbacks)
+  
+        #query = UserAccess.objects.select_related('user_data', "user_role").prefetch_related(bookings, feedbacks)
+        query = UserAccess.objects.select_related('user_data', "user_role")
         try:
             return query.get(login=userLogin, user_data__deleted_at__isnull=True)
         except UserAccess.DoesNotExist:
