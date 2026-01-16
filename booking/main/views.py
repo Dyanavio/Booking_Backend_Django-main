@@ -1,20 +1,23 @@
 import base64, json, re, datetime
-from django.http import HttpResponse, Http404
 from backend.services import *
 from main.models import *
 from main.rest import *
-from django.http import JsonResponse
+from .serializers import *
+from .filters import *
+
 from typing import Dict, Any
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-
-from .serializers import *
-from .filters import *
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Avg
+from django.http import HttpResponse, Http404
+from django.http import JsonResponse
 
 
 passwordRegex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$")
@@ -223,4 +226,139 @@ class RealtyViewSet(ModelViewSet):
         if self.action == 'create':
             return RealtyCreateSerializer
         return RealtySerializer
+
+    #GET /realty/
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+
+        response = RestResponse(
+            status=RestStatus(True, 200, "OK"),
+            data=serializer.data
+        )
+
+        return Response(response.to_dict(), status=status.HTTP_200_OK)
+
+    #GET /realty/{id}/
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+
+        response = RestResponse(
+            status=RestStatus(True, 200, "OK"),
+            data=serializer.data
+        )
+
+        return Response(response.to_dict(), status=status.HTTP_200_OK)
+
+    #POST /realty/
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        response = RestResponse(
+            status=RestStatus(True, 201, "Created"),
+            data=RealtySerializer(instance).data
+        )
+
+        return Response(response.to_dict(), status=status.HTTP_201_CREATED)
     
+
+@api_view(["POST"])
+def RealtySearchViewSet(request):
+    serializer = RealtySearchSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    data = serializer.validated_data
+
+    queryset = Realty.objects.filter(deleted_at__isnull=True)
+
+    if "Price" in data:
+        queryset = queryset.filter(price__lte=data["Price"])
+
+    if "Checkboxes" in data and data["Checkboxes"]:
+        queryset = queryset.filter(
+            realty_group__slug__in=data["Checkboxes"]
+        )
+
+    if "Rating" in data:
+        queryset = queryset.annotate(
+            avg_rating=Avg("feedbacks__rate")
+        ).filter(
+            avg_rating__gte=data["Rating"]
+        )
+
+    queryset = queryset.distinct()
+
+    result = RealtySerializer(queryset, many=True).data
+
+    response = RestResponse(
+        status=RestStatus(True, 200, "OK"),
+        data=result
+    )
+
+    return Response(response.to_dict(), status=status.HTTP_200_OK)
+
+class FeedbackView(APIView):
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = FeedbackFilter
+
+    def get(self, request):
+        queryset = Feedback.objects.filter(deleted_at__isnull=True)
+
+
+        feedback_filter = FeedbackFilter(request.GET, queryset=queryset)
+        queryset = feedback_filter.qs
+
+        serializer = FeedbackSerializer(queryset, many=True)
+
+        return Response(
+            RestResponse(
+                RestStatus(True, 200, "OK"),
+                serializer.data
+            ).to_dict(),
+            status=status.HTTP_200_OK
+        )
+
+    def post(self, request):
+        data = request.data
+
+        try:
+            realty = Realty.objects.get(id=data.get("realty_id"))
+            user_access = UserAccess.objects.get(id=data.get("user_access_id"))
+
+            feedback = Feedback.objects.create(
+                text=data.get("text"),
+                rate=data.get("rate"),
+                realty=realty,
+                user_access=user_access
+            )
+
+            serializer = FeedbackSerializer(feedback)
+
+            return Response(
+                RestResponse(
+                    RestStatus(True, 201, "Created"),
+                    serializer.data
+                ).to_dict(),
+                status=status.HTTP_201_CREATED
+            )
+
+        except Realty.DoesNotExist:
+            return Response(
+                RestResponse(
+                    RestStatus(False, 404, "Realty not found"),
+                    None
+                ).to_dict(),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except UserAccess.DoesNotExist:
+            return Response(
+                RestResponse(
+                    RestStatus(False, 404, "User not found"),
+                    None
+                ).to_dict(),
+                status=status.HTTP_404_NOT_FOUND
+            )

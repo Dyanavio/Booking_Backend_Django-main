@@ -32,3 +32,11 @@ class UserFilter(django_filters.FilterSet):
     class Meta:
         model = UserAccess
         fields = ['role', 'email']
+
+class FeedbackFilter(django_filters.FilterSet):
+    realty = django_filters.UUIDFilter(field_name="realty_id")
+    min_rate = django_filters.NumberFilter(field_name="rate", lookup_expr="gte")
+
+    class Meta:
+        model = Feedback
+        fields = ["realty", "min_rate"]

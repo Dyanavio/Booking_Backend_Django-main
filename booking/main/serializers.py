@@ -180,3 +180,11 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'booking_items',
             'feedbacks',
         )
+
+class RealtySearchSerializer(serializers.Serializer):
+    Price = serializers.FloatField(required=False)
+    Rating = serializers.IntegerField(required=False, min_value=1, max_value=5)
+    Checkboxes = serializers.ListField(
+        child=serializers.CharField(),
+        required=False
+    )

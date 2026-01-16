@@ -5,14 +5,16 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register(r'api/realty', RealtyViewSet, basename='realty')
 
-    
+
 urlpatterns = [
     path('api/user/<str:login>/', userDetail, name='userDetail'),
     path('api/auth/', login, name='login'), 
     path('api/auth/register', register, name='auth_register'), #POST
+    path('api/realty/search', RealtySearchViewSet, name='realty_search'),
 
     path('', include(router.urls)),
-    path("Storage/Item/<str:itemId>", item, name="storageItem")
+    path("Storage/Item/<str:itemId>", item, name="storageItem"),
+    path("api/feedback/", FeedbackView.as_view(), name="feedback"),
 ]
 
 
@@ -32,6 +34,6 @@ urlpatterns = [
     #path('Administrator/GetRealtiesTable/', admin_realties_table_view, name='admin_realties_table'), #GET
 
     #path('api/booking-item/<uuid:id>/', booking_item_view, name='booking_item'), #POST
-    #path('api/feedback/<uuid:id>/', feedback_view, name='feedback'), #PATCH
+    
     #path('api/feedback/<uuid:id>/', delete_feedback_view, name='delete_feedback'), #DELETE
     #path('resources/images/<str:imageUrl>', loadImage, name='loadImage')
