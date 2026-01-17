@@ -111,7 +111,7 @@ def login(request):
         "jti": access_token.jti,
         "sub": str(access_token.sub),
         "iat": access_token.iat,
-        "exp": access_token.exp,
+        "Exp": access_token.exp,
         "iss": access_token.iss,
         "aud": access_token.aud,
         "FirstName": userAccess.user_data.first_name,
@@ -275,12 +275,16 @@ def RealtySearchViewSet(request):
     queryset = Realty.objects.filter(deleted_at__isnull=True)
 
     if "Price" in data:
-        queryset = queryset.filter(price__lte=data["Price"])
+        queryset = queryset.filter(price__gte=data["Price"])
 
     if "Checkboxes" in data and data["Checkboxes"]:
         queryset = queryset.filter(
             realty_group__slug__in=data["Checkboxes"]
         )
+
+    queryset = queryset.annotate(
+        avg_rating=Avg("feedbacks__rate")
+    )
 
     if "Rating" in data:
         queryset = queryset.annotate(

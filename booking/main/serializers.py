@@ -77,13 +77,36 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
 
         return realty
 
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = (
+            'name',
+            'country',
+        )
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = (
+            'name',
+        )
+
+
 class RealtySerializer(serializers.ModelSerializer):
-    city = serializers.CharField(source='city.name')
-    country = serializers.CharField(source='city.country.name')
+    city = CitySerializer(read_only=True)
+    country = CountrySerializer(source='city.country', read_only=True)
     group = serializers.CharField(source='realty_group.name')
 
     feedbacks = FeedbackSerializer(many=True, read_only=True)
     booking_items = BookingItemSerializer(many=True, read_only=True)
+    images = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='url'
+    )
+
+    accRates = serializers.SerializerMethodField()
 
     class Meta:
         model = Realty
@@ -96,9 +119,21 @@ class RealtySerializer(serializers.ModelSerializer):
             'city',
             'country',
             'group',
+            'accRates',
             'feedbacks',
             'booking_items',
+            'images',
         )
+        
+    def get_accRates(self, obj):
+        avg = 0
+
+        if hasattr(obj, "avg_rating") and obj.avg_rating is not None:
+            avg = round(float(obj.avg_rating), 2)
+
+        return {
+            "avgRate": avg
+        }
 
 class UserRoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -188,3 +223,6 @@ class RealtySearchSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False
     )
+
+class AccRatesSerializer(serializers.Serializer):
+    avgRate = serializers.FloatField()
