@@ -31,6 +31,19 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
             'group',
         )
 
+    def to_internal_value(self, data):
+       mutable = data.copy()
+
+       mutable['name'] = data.get('realty-name')
+       mutable['description'] = data.get('realty-description')
+       mutable['slug'] = data.get('realty-slug')
+       mutable['price'] = data.get('realty-price')
+       mutable['country'] = data.get('realty-country')
+       mutable['city'] = data.get('realty-city')
+       mutable['group'] = data.get('realty-group')
+
+       return super().to_internal_value(mutable)
+
     def create(self, validated_data):
         country_name = validated_data.pop('country').strip()
         city_name = validated_data.pop('city').strip()

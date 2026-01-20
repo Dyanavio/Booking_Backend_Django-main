@@ -33,8 +33,8 @@ class FeedbackView(APIView):
         data = request.data
 
         try:
-            realty = Realty.objects.get(id=data.get("realty_id"))
-            user_access = UserAccess.objects.get(id=data.get("user_access_id"))
+            realty = Realty.objects.get(id=data.get("realtyId"))
+            user_access = UserAccess.objects.get(id=data.get("userAccessId"))
 
             feedback = Feedback.objects.create(
                 text=data.get("text"),

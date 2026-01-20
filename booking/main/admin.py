@@ -18,3 +18,15 @@ class UserRoleAdmin(admin.ModelAdmin):
 @admin.register(UserData)
 class UserDataAdmin(admin.ModelAdmin):
     list_display = ("id", "first_name", "last_name", "email", "birth_date", "registered_at")
+
+@admin.register(Country)
+class CountryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name") 
+
+@admin.register(Realty)
+class RealtyAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'slug')
+
+@admin.register(ItemImage)
+class ItemImageAdmin(admin.ModelAdmin):
+    list_display = ("id", "image_url", "order")

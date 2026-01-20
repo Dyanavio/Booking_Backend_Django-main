@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from main.models import *
 from main.serializers.location import CitySerializer
+from main.serializers.common import *
 
 class BookingRealtyNameSerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
@@ -13,9 +14,12 @@ class BookingRealtyNameSerializer(serializers.ModelSerializer):
         )
 
 class BookingItemShortSerializer(serializers.ModelSerializer):
-    realty = BookingRealtyNameSerializer(read_only=True)
+    realtyId = serializers.ReadOnlyField(source="realty.id")
     startDate = serializers.DateTimeField(source="start_date")
     endDate = serializers.DateTimeField(source="end_date")
+    userAccess = UserAccessSerializer(source="user_access", read_only=True)
+    
+    realty = BookingRealtyNameSerializer(read_only=True)
 
     images = serializers.SlugRelatedField(
         source="realty.images",
@@ -31,7 +35,9 @@ class BookingItemShortSerializer(serializers.ModelSerializer):
             "startDate",
             "endDate",
             "realty",
+            "realtyId",
             "images",
+            "userAccess",
         )
 
 class BookingItemSerializer(serializers.ModelSerializer):

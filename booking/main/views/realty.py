@@ -20,6 +20,7 @@ from django.db.models import Avg, Count
 from django.db.models.functions import Coalesce
 from backend.services import *
 
+
 storageService = DiskStorageService()
 
 
@@ -63,8 +64,6 @@ class RealtyViewSet(ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
 
-        
-
         response = RestResponse(
             status=RestStatus(True, 200, "OK"),
             data=serializer.data
@@ -78,13 +77,17 @@ class RealtyViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
+        #itemImage = ItemImage.objects.create(
+        #    image_url = DiskStorageService.
+        #)
+
         response = RestResponse(
             status=RestStatus(True, 201, "Created"),
-            data=RealtySerializer(instance).data
+            data=serializer.data
         )
-
-        return Response(response.to_dict(), status=status.HTTP_201_CREATED)
+        return Response(data=response.to_dict(), status=status.HTTP_201_CREATED)
     
+
 @api_view(["POST"])
 def RealtySearchViewSet(request):
     serializer = RealtySearchSerializer(data=request.data)

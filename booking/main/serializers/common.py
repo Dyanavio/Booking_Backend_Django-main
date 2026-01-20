@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from main.models import UserData, Card
+from main.models import *
 
 class CardSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,3 +25,13 @@ class UserDataSerializer(serializers.ModelSerializer):
             'registered_at',
             'cards',
         )
+
+class UserAccessSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAccess
+        fields = ("id", "login", "user_id")
+
+class RealtySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Realty
+        fields = ("id",)
