@@ -8,14 +8,11 @@ from main.serializers.realty import *
 from main.serializers.feeedback import *
 from main.serializers.location import *
 from main.filters import *
-#from typing import Dict, Any
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-#from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
-#from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Avg, Count
 from django.db.models.functions import Coalesce
 from backend.services import *
@@ -99,46 +96,63 @@ class RealtyViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=status.HTTP_201_CREATED)
     
+    #PATCH /realty/
     def patch(self, request, *args, **kwargs):
         slug = request.data.get('realty-former-slug')
         instance = get_object_or_404(Realty, slug=slug)
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        name = request.data.get('realty-name')
+        if name:
+            instance.name = name
 
-        try:
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+        description = request.data.get('realty-description')
+        if description:
+            instance.description = description
 
-                if 'realty-main-image' in request.FILES:
-                    image_file = request.FILES.get("realty-img")
-                    if not image_file:
-                        return Response(
-                            {"error": "Image is required"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
+        slug_new = request.data.get('realty-slug')
+        if slug_new:
+            instance.slug = slug_new
 
-                    saved_name = storageService.saveItem(image_file)
+        price = request.data.get('realty-price')
+        if price:
+            instance.price = price
 
-                    itemImage = ItemImage(
-                        image_url=saved_name,
-                        order=0,
-                        realty=instance
-                    )
-                    itemImage.save()
-            else:
-                raise Exception
+        group_name = request.data.get('realty-group')
+        if group_name:
+            group = RealtyGroup.objects.filter(name=group_name).first()
+            if group:
+                instance.realty_group = group
 
-            response = RestResponse(
-                status=RestStatus(True, 200, "Ok"),
-                data=serializer.data
+        city_name = request.data.get('realty-city')
+        country_name = request.data.get('realty-country')
+        if city_name or country_name:
+            city_qs = City.objects.all()
+            if city_name:
+                city_qs = city_qs.filter(name=city_name)
+            if country_name:
+                city_qs = city_qs.filter(country__name=country_name)
+            city = city_qs.first()
+            if city:
+                instance.city = city
+
+        instance.save()
+
+        if 'realty-main-image' in request.FILES:
+            image_file = request.FILES['realty-main-image']
+            saved_name = storageService.saveItem(image_file)
+            ItemImage.objects.create(
+                image_url=saved_name,
+                order=0,
+                realty=instance
             )
-            return Response(response.to_dict(), status=status.HTTP_200_OK)
-        except:
-            response = RestResponse(
-                status=RestStatus(False, 400, "Bad Request"),
-                data=serializer.errors
-            )
-            return Response(response.to_dict(), status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = RealtySerializer(instance, context={'request': request})
+        response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data=serializer.data
+        )
+        return Response(response.to_dict(), status=200)
+
 
     
 

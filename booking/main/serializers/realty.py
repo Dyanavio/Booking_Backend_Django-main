@@ -85,7 +85,7 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
 
 class RealtySerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
-    group = serializers.CharField(source='realty_group.name')
+    group = serializers.CharField(source='realty_group.name', read_only=True)
 
     feedbacks = FeedbackSerializer(many=True, read_only=True)
     booking_items = BookingItemSerializer(many=True, read_only=True)
@@ -109,19 +109,6 @@ class RealtySerializer(serializers.ModelSerializer):
             'images',
         )
 
-    def update(self, instance, validated_data):
-        group_data = validated_data.pop('realty-group', None)
-        if group_data:
-            group_name = group_data.get('name')
-            group_obj = RealtyGroup.objects.filter(name=group_name).first()
-            if group_obj:
-                instance.realty_group = group_obj
-                
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        
-        instance.save()
-        return instance
 
     def get_images(self, obj):
         request = self.context.get("request")
@@ -155,3 +142,74 @@ class RealtySerializer(serializers.ModelSerializer):
             "countRate": count
         }).data
 
+class RealtyUpdateSerializer(serializers.ModelSerializer):
+    data = serializers.DictField(write_only=True)
+    realty_name = serializers.CharField(
+        source='name',
+        write_only=True,
+        required=False
+    )
+
+    realty_description = serializers.CharField(
+        source='description',
+        write_only=True,
+        required=False
+    )
+
+    realty_slug = serializers.SlugField(
+        source='slug',
+        write_only=True,
+        required=False
+    )
+
+    realty_price = serializers.DecimalField(
+        source='price',
+        max_digits=10,
+        decimal_places=2,
+        write_only=True,
+        required=False
+    )
+
+    realty_group = serializers.CharField(
+        write_only=True,
+        required=False
+    )
+
+
+    realty_city = serializers.CharField(
+        write_only=True,
+        required=False
+    )
+
+    realty_country = serializers.CharField(
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = Realty
+        fields = (
+            'realty_name',
+            'realty_description',
+            'realty_slug',
+            'realty_price',
+            'realty_group',
+            'realty_city',
+            'realty_country',
+            'images',
+            'data',
+        )
+
+    def update(self, instance, validated_data):
+        group_name = validated_data.pop('realty_group', None)
+
+        if group_name:
+            group = RealtyGroup.objects.filter(name=group_name).first()
+            if group:
+                instance.realty_group = group
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
