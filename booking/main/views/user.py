@@ -1,10 +1,5 @@
 from typing import Any, Dict
-import base64
-import json
-import re
-import datetime
-import time
-import uuid
+import base64, json, re, datetime, time, uuid
 from backend.services import *
 from main.models import *
 from main.rest import *
@@ -16,14 +11,14 @@ from main.serializers.location import *
 from main.filters import *
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Avg, Count
 from django.http import HttpResponse, Http404
 from django.http import JsonResponse
+from main.filters import *
+from django.shortcuts import get_object_or_404
 
 passwordRegex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$")
 
@@ -33,6 +28,73 @@ accessTokenAccessor = AccessTokenAccessor()
 kdfService = PbKdfService()
 jwtService = JwtService()
 randomService = DefaultRandomService()
+
+class UserViewSet(ModelViewSet):
+    queryset = UserAccess.objects.filter(deleted_at__isnull = True)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = UserFilter
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserAccessCreateSerializer
+        return UserAccessSerializer
+    
+    #POST /user/
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+        
+        response = RestResponse(
+            status=RestStatus(True, 201, "Created"),
+            data=serializer.data
+        )
+        return Response(response.to_dict(), status=status.HTTP_201_CREATED)
+    
+    #PATCH /user/{former_login}
+    def patch(self, request, *args, **kwargs):
+        login = request.data.get('user-former-login')
+        instance = get_object_or_404(UserAccess, login=login)
+
+        first_name = request.data.get('user-first-name')
+        if first_name:
+            instance.user_data.first_name = first_name
+
+        last_name = request.data.get('user-last-name')
+        if last_name:
+            instance.user_data.last_name = last_name
+
+        email = request.data.get('user-email')
+        if email:
+            instance.user_data.email = email
+
+        login = request.data.get('user-login')
+        if login:
+            instance.login = login
+
+        birthdate = request.data.get('user-birthdate')
+        if birthdate:
+            instance.birthdate = birthdate
+
+        password = request.data.get('user-password')
+        if password:
+            salt = randomService.otp(12)
+            instance.salt = salt
+            instance.dk = kdfService.dk(password, salt)
+
+        role_id = request.data.get('user-role')
+        if role_id:
+            user_role = UserRole.objects.get(id=role_id)
+            instance.user_role = user_role
+
+        instance.save()
+        serializer = UserAccessSerializer(instance, context={'request': request})
+        response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data=serializer.data
+        )
+        return Response(response.to_dict(), status=200)
+
 
 @api_view(['GET'])
 def userDetail(request, login: str):
@@ -56,7 +118,7 @@ def userDetail(request, login: str):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    serializer = UserDetailSerializer(user)
+    serializer = UserAccessSerializer(user)
     return Response(
         RestResponse(
             RestStatus(True, 200, "OK"),
@@ -216,3 +278,16 @@ def processSignUpData(model: Any) -> Dict[str, str]:
     except Exception as e:
         errors["user_login"] = "Login already exists"
     return errors
+
+
+def getUsersTable(request):
+    userAccesses = UserAccess.objects.all()
+    tableBodyContent = ""
+    for userAccess in userAccesses:
+        tableBodyContent +=  f"<tr><td>{userAccess.user_data.first_name}</td> <td>{userAccess.user_data.last_name}</td> <td>{userAccess.user_data.email}</td> <td>{userAccess.login}</td> <td>{userAccess.user_data.birth_date}</td> <td>{userAccess.user_role.id}</td></tr>"
+                
+        response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data = tableBodyContent
+        )
+    return JsonResponse(response.to_dict(), status=200)

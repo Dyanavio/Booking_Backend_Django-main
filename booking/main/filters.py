@@ -1,5 +1,5 @@
 import django_filters
-from .models import *
+from main.models import *
 
 class RealtyFilter(django_filters.FilterSet):
     price_min = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
@@ -18,20 +18,22 @@ class RealtyFilter(django_filters.FilterSet):
             'price_max',
         ]
 
-class UserFilter(django_filters.FilterSet):
-    role = django_filters.CharFilter(
-        field_name='user_role__id',
-        lookup_expr='iexact'
-    )
 
-    email = django_filters.CharFilter(
-        field_name='user_data__email',
-        lookup_expr='icontains'
-    )
+
+class UserFilter(django_filters.FilterSet):
+    user_data = django_filters.UUIDFilter(field_name="user_data__id")
+    user_role = django_filters.CharFilter(field_name='user_role__id', lookup_expr='iexact')
+
+    #email = django_filters.CharFilter(
+    #    field_name='user_data__email',
+    #    lookup_expr='icontains'
+    #)
 
     class Meta:
         model = UserAccess
-        fields = ['role', 'email']
+        fields = ['user_data', 'user_role']
+
+
 
 class FeedbackFilter(django_filters.FilterSet):
     realty = django_filters.UUIDFilter(field_name="realty_id")

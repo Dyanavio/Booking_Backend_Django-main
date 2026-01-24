@@ -26,7 +26,7 @@ class UserDataSerializer(serializers.ModelSerializer):
             'cards',
         )
 
-class UserAccessSerializer(serializers.ModelSerializer):
+class CommonUserAccessSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAccess
         fields = ("id", "login", "user_id")

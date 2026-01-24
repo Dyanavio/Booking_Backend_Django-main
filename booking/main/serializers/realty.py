@@ -83,6 +83,7 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
 
         return realty
 
+
 class RealtySerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     group = serializers.CharField(source='realty_group.name', read_only=True)
@@ -141,6 +142,8 @@ class RealtySerializer(serializers.ModelSerializer):
             "avgRate": avg,
             "countRate": count
         }).data
+
+
 
 class RealtyUpdateSerializer(serializers.ModelSerializer):
     data = serializers.DictField(write_only=True)

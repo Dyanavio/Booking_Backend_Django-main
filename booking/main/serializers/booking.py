@@ -15,11 +15,13 @@ class BookingRealtyNameSerializer(serializers.ModelSerializer):
             "price",
         )
 
+
+
 class BookingItemShortSerializer(serializers.ModelSerializer):
     realtyId = serializers.ReadOnlyField(source="realty.id")
     startDate = serializers.DateTimeField(source="start_date")
     endDate = serializers.DateTimeField(source="end_date")
-    userAccess = UserAccessSerializer(source="user_access", read_only=True)
+    userAccess = CommonUserAccessSerializer(source="user_access", read_only=True)
 
     realty = BookingRealtyNameSerializer(read_only=True)
     images = serializers.SerializerMethodField()

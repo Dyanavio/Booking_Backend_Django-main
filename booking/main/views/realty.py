@@ -1,5 +1,4 @@
-from django.http import HttpResponse, Http404
-#from django.http import JsonResponse
+from django.http import HttpResponse, Http404, JsonResponse
 from main.models import *
 from main.rest import *
 from main.serializers.user import *
@@ -28,6 +27,8 @@ def item(request, itemId):
         return HttpResponse(content, content_type=mime_type)
     except (FileNotFoundError, ValueError):
         raise Http404("Item not found")
+    
+
 
 class RealtyViewSet(ModelViewSet):
     queryset = Realty.objects.filter(deleted_at__isnull=True)
@@ -95,7 +96,7 @@ class RealtyViewSet(ModelViewSet):
             data=serializer.data
         )
         return Response(response.to_dict(), status=status.HTTP_201_CREATED)
-    
+ 
     #PATCH /realty/
     def patch(self, request, *args, **kwargs):
         slug = request.data.get('realty-former-slug')
@@ -132,8 +133,14 @@ class RealtyViewSet(ModelViewSet):
             if country_name:
                 city_qs = city_qs.filter(country__name=country_name)
             city = city_qs.first()
-            if city:
-                instance.city = city
+            if not city:
+                if not Country.objects.filter(name = country_name).first():
+                    new_country = Country(name=country_name)
+                    new_country.save()
+                new_city = City(name=city_name, country=new_country)
+                new_city.save()
+                city = new_city
+            instance.city = city
 
         instance.save()
 
@@ -191,3 +198,14 @@ def RealtySearchViewSet(request):
 
     return Response(response.to_dict(), status=status.HTTP_200_OK)
 
+
+def getRealtiesTable(request):
+    realties = Realty.objects.all()
+    tableBodyContent = ""
+    for realty in realties:
+        tableBodyContent +=  f"<tr><td>{realty.name}</td> <td>{realty.description}</td> <td>{realty.slug}</td> <td>{realty.price}</td> <td>{realty.city.country.name}</td> <td>{realty.city.name}</td> <td>{realty.realty_group.name}</td> </tr>"
+        response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data = tableBodyContent
+        )
+    return JsonResponse(response.to_dict(), status=200)

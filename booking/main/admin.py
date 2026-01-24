@@ -23,6 +23,10 @@ class UserDataAdmin(admin.ModelAdmin):
 class CountryAdmin(admin.ModelAdmin):
     list_display = ("id", "name") 
 
+@admin.register(City)
+class CityAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "country")
+
 @admin.register(Realty)
 class RealtyAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug')
@@ -30,3 +34,4 @@ class RealtyAdmin(admin.ModelAdmin):
 @admin.register(ItemImage)
 class ItemImageAdmin(admin.ModelAdmin):
     list_display = ("id", "image_url", "order", "realty", "realty_id")
+
