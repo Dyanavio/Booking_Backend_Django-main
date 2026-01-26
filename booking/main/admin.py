@@ -29,7 +29,7 @@ class CityAdmin(admin.ModelAdmin):
 
 @admin.register(Realty)
 class RealtyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'slug')
+    list_display = ('id', 'name', 'slug', 'price', 'realty_group', 'city', 'deleted_at')
 
 @admin.register(ItemImage)
 class ItemImageAdmin(admin.ModelAdmin):

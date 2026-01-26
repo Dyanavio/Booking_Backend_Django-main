@@ -19,6 +19,7 @@ from django.http import HttpResponse, Http404
 from django.http import JsonResponse
 from main.filters import *
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 passwordRegex = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!?@$&*])[A-Za-z\d@$!%*?&]{12,}$")
 
@@ -95,6 +96,16 @@ class UserViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=200)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.deleted_at = timezone.now()
+        instance.save()
+
+        response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data=f"User '{login}' deleted successfully"
+        )
+        return Response(response.to_dict(), status=200)
 
 @api_view(['GET'])
 def userDetail(request, login: str):
@@ -284,6 +295,8 @@ def getUsersTable(request):
     userAccesses = UserAccess.objects.all()
     tableBodyContent = ""
     for userAccess in userAccesses:
+        if userAccess.deleted_at is not None:
+            continue
         tableBodyContent +=  f"<tr><td>{userAccess.user_data.first_name}</td> <td>{userAccess.user_data.last_name}</td> <td>{userAccess.user_data.email}</td> <td>{userAccess.login}</td> <td>{userAccess.user_data.birth_date}</td> <td>{userAccess.user_role.id}</td></tr>"
                 
         response = RestResponse(

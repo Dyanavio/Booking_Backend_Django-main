@@ -16,6 +16,8 @@ from django.db.models import Avg, Count
 from django.db.models.functions import Coalesce
 from backend.services import *
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
 
 storageService = DiskStorageService()
 
@@ -31,6 +33,8 @@ def item(request, itemId):
 
 
 class RealtyViewSet(ModelViewSet):
+    #slug like id to requests
+    lookup_field = 'slug'
     queryset = Realty.objects.filter(deleted_at__isnull=True)
     filter_backends = [DjangoFilterBackend]
     filterset_class = RealtyFilter
@@ -159,7 +163,22 @@ class RealtyViewSet(ModelViewSet):
             data=serializer.data
         )
         return Response(response.to_dict(), status=200)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.deleted_at = timezone.now()
+        instance.save()
 
+        return Response({
+            "status": {
+                "isOk": True,
+                "code": 200,
+                "phrase": "Ok"
+            },
+            "data": {
+                "message": f"Realty with slug {instance.slug} deleted"
+            }
+        }, status=200)
 
     
 
@@ -203,6 +222,8 @@ def getRealtiesTable(request):
     realties = Realty.objects.all()
     tableBodyContent = ""
     for realty in realties:
+        if realty.deleted_at is not None:
+            continue
         tableBodyContent +=  f"<tr><td>{realty.name}</td> <td>{realty.description}</td> <td>{realty.slug}</td> <td>{realty.price}</td> <td>{realty.city.country.name}</td> <td>{realty.city.name}</td> <td>{realty.realty_group.name}</td> </tr>"
         response = RestResponse(
             status=RestStatus(True, 200, "Ok"),
