@@ -31,7 +31,6 @@ def item(request, itemId):
         raise Http404("Item not found")
     
 
-
 class RealtyViewSet(ModelViewSet):
     #slug like id to requests
     lookup_field = 'slug'
@@ -230,3 +229,58 @@ def getRealtiesTable(request):
             data = tableBodyContent
         )
     return JsonResponse(response.to_dict(), status=200)
+
+
+class LikedRealtyViewSet(ModelViewSet):
+    queryset = LikedRealty.objects.select_related(
+        'realty',
+        'user_access'
+    )
+    http_method_names = ['get', 'post', 'delete']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return LikedRealtyCreateSerializer
+        return LikedRealtySerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        response = RestResponse(
+            status=RestStatus(True, 201, "Created"),
+            data=LikedRealtySerializer(instance).data
+        )
+        return Response(response.to_dict(), status=201)
+    
+    def list(self, request, *args, **kwargs):
+        login = request.query_params.get('login')
+
+        queryset = self.get_queryset()
+        if login:
+            queryset = queryset.filter(user_access__login=login)
+
+        serializer = self.get_serializer(queryset, many=True)
+
+        response = RestResponse(
+            status=RestStatus(True, 200, "OK"),
+            data=serializer.data
+        )
+        return Response(response.to_dict(), status=200)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+
+        return Response({
+            "status": {
+                "isOk": True,
+                "code": 200,
+                "phrase": "Ok"
+            },
+            "data": {
+                "message": "Removed from favorites"
+            }
+        }, status=200)
+

@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\.venv",
+    "\\.venv\\Scripts",
+    "\\booking",
+    "\\booking\\main",
+    "\\booking\\main\\views"
+  ],
+  "SelectedNode": "\\.venv\\Scripts\\activate.py",
+  "PreviewInSolutionExplorer": false
+}

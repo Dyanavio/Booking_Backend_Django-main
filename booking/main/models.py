@@ -281,3 +281,24 @@ class Feedback(models.Model):
 
     class Meta:
         db_table = "feedbacks"
+
+class LikedRealty(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    realty = models.ForeignKey(
+        Realty,
+        on_delete=models.CASCADE,
+        related_name="liked_by"
+    )
+
+    user_access = models.ForeignKey(
+        "UserAccess",
+        on_delete=models.CASCADE,
+        related_name="liked_realties"
+    )
+
+    class Meta:
+        db_table = "liked_realties"
+        unique_together = ("realty", "user_access")

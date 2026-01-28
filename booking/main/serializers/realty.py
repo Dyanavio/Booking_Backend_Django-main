@@ -83,7 +83,6 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
 
         return realty
 
-
 class RealtySerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     group = serializers.CharField(source='realty_group.name', read_only=True)
@@ -142,8 +141,6 @@ class RealtySerializer(serializers.ModelSerializer):
             "avgRate": avg,
             "countRate": count
         }).data
-
-
 
 class RealtyUpdateSerializer(serializers.ModelSerializer):
     data = serializers.DictField(write_only=True)
@@ -216,3 +213,51 @@ class RealtyUpdateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+
+class LikedRealtySerializer(serializers.ModelSerializer):
+    realty = RealtySerializer(read_only=True)
+    user_login = serializers.CharField(
+        source='user_access.login',
+        read_only=True
+    )
+
+    class Meta:
+        model = LikedRealty
+        fields = (
+            'id',
+            'created_at',
+            'user_login',
+            'realty',
+        )
+
+
+
+class LikedRealtyCreateSerializer(serializers.ModelSerializer):
+    realty_id = serializers.UUIDField(write_only=True)
+    user_login = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = LikedRealty
+        fields = ('realty_id', 'user_login')
+
+    def validate(self, attrs):
+        realty = Realty.objects.filter(id=attrs['realty_id']).first()
+        if not realty:
+            raise serializers.ValidationError("Realty not found")
+
+        user = UserAccess.objects.filter(login=attrs['user_login']).first()
+        if not user:
+            raise serializers.ValidationError("User not found")
+
+        if LikedRealty.objects.filter(realty=realty, user_access=user).exists():
+            raise serializers.ValidationError("Realty already liked")
+
+        attrs['realty'] = realty
+        attrs['user_access'] = user
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('realty_id')
+        validated_data.pop('user_login')
+        return super().create(validated_data)
