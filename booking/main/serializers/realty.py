@@ -186,6 +186,11 @@ class RealtyUpdateSerializer(serializers.ModelSerializer):
         required=False
     )
 
+    realty_deleted_at = serializers.DateField(
+        write_only=True,
+        required=False
+    )
+
     class Meta:
         model = Realty
         fields = (
@@ -196,6 +201,7 @@ class RealtyUpdateSerializer(serializers.ModelSerializer):
             'realty_group',
             'realty_city',
             'realty_country',
+            'realty_deleted_at',
             'images',
             'data',
         )

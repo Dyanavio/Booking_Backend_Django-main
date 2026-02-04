@@ -31,7 +31,7 @@ class CommonUserAccessSerializer(serializers.ModelSerializer):
         model = UserAccess
         fields = ("id", "login", "user_id")
 
-class RealtySerializer(serializers.ModelSerializer):
+class CommonRealtySerializer(serializers.ModelSerializer):
     class Meta:
         model = Realty
         fields = ("id",)

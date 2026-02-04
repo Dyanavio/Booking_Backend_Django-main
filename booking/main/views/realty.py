@@ -30,10 +30,11 @@ def item(request, itemId):
     except (FileNotFoundError, ValueError):
         raise Http404("Item not found")
     
+# -----------------------------------------------------------------------------------------------
 
 class RealtyViewSet(ModelViewSet):
     #slug like id to requests
-    lookup_field = 'slug'
+    #lookup_field = 'slug'
     queryset = Realty.objects.filter(deleted_at__isnull=True)
     filter_backends = [DjangoFilterBackend]
     filterset_class = RealtyFilter
@@ -180,6 +181,7 @@ class RealtyViewSet(ModelViewSet):
         }, status=200)
 
     
+# -----------------------------------------------------------------------------------------------
 
 @api_view(["POST"])
 def RealtySearchViewSet(request):
@@ -230,6 +232,8 @@ def getRealtiesTable(request):
         )
     return JsonResponse(response.to_dict(), status=200)
 
+
+# -----------------------------------------------------------------------------------------------
 
 class LikedRealtyViewSet(ModelViewSet):
     queryset = LikedRealty.objects.select_related(

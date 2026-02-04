@@ -31,6 +31,10 @@ class CityAdmin(admin.ModelAdmin):
 class RealtyAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug', 'price', 'realty_group', 'city', 'deleted_at')
 
+@admin.register(LikedRealty)
+class LikedRealtyAdmin(admin.ModelAdmin):
+    list_display = ("id", "realty", "user_access")
+
 @admin.register(ItemImage)
 class ItemImageAdmin(admin.ModelAdmin):
     list_display = ("id", "image_url", "order", "realty", "realty_id")

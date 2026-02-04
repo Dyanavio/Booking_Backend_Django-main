@@ -26,6 +26,8 @@ class BookingItemShortSerializer(serializers.ModelSerializer):
     realty = BookingRealtyNameSerializer(read_only=True)
     images = serializers.SerializerMethodField()
 
+    deletedAt = serializers.DateTimeField(source="deleted_at")
+
     class Meta:
         model = BookingItem
         fields = (
@@ -36,6 +38,7 @@ class BookingItemShortSerializer(serializers.ModelSerializer):
             "realtyId",
             "images",
             "userAccess",
+            "deletedAt"
         )
 
     def get_images(self, obj):
