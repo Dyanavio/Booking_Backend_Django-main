@@ -83,6 +83,15 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
 
         return realty
 
+
+class LikedRealtySearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LikedRealty
+        fields = (
+            'id',
+        )
+
+
 class RealtySerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
     group = serializers.CharField(source='realty_group.name', read_only=True)
@@ -92,6 +101,8 @@ class RealtySerializer(serializers.ModelSerializer):
 
     images = serializers.SerializerMethodField()
     accRates = serializers.SerializerMethodField()
+
+    liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Realty
@@ -107,7 +118,19 @@ class RealtySerializer(serializers.ModelSerializer):
             'feedbacks',
             'booking_items',
             'images',
+            'liked'
         )
+
+    def get_liked(self, obj):
+        request = self.context.get("request")
+        if not request or not request.query_params.get('user_access_id'):
+            return None
+        user_access_id = request.query_params.get('user_access_id')
+        like_instance = obj.liked_by.filter(user_access_id=user_access_id).first()
+        
+        if like_instance:
+            return LikedRealtySearchSerializer(like_instance).data
+        return None
 
 
     def get_images(self, obj):
@@ -141,6 +164,7 @@ class RealtySerializer(serializers.ModelSerializer):
             "avgRate": avg,
             "countRate": count
         }).data
+
 
 class RealtyUpdateSerializer(serializers.ModelSerializer):
     data = serializers.DictField(write_only=True)
@@ -237,6 +261,13 @@ class LikedRealtySerializer(serializers.ModelSerializer):
             'realty',
         )
 
+
+class LikedRealtyListSerializer(serializers.ModelSerializer):
+    realty = RealtySerializer(read_only=True) 
+
+    class Meta:
+        model = LikedRealty
+        fields = ('id', 'created_at', 'realty')
 
 
 class LikedRealtyCreateSerializer(serializers.ModelSerializer):

@@ -247,32 +247,51 @@ class LikedRealtyViewSet(ModelViewSet):
             return LikedRealtyCreateSerializer
         return LikedRealtySerializer
     
+    def get_queryset(self):
+        """
+        Optimized queryset to prevent N+1 issues when serializing the nested Realty.
+        """
+        queryset = LikedRealty.objects.select_related(
+            'user_access',
+            'realty',
+            'realty__city',        
+            'realty__realty_group' 
+        ).prefetch_related(
+            'realty__images',      
+            'realty__feedbacks',   
+            'realty__booking_items'
+        )
+
+        login = self.request.query_params.get('login')
+        if login:
+            queryset = queryset.filter(user_access__login=login)
+            
+        return queryset
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
+        read_serializer = LikedRealtyListSerializer(instance, context={'request': request}) 
+
         response = RestResponse(
             status=RestStatus(True, 201, "Created"),
-            data=LikedRealtySerializer(instance).data
+            data=read_serializer.data
         )
-        return Response(response.to_dict(), status=201)
-    
+        return Response(response.to_dict(), status=status.HTTP_201_CREATED)
+
     def list(self, request, *args, **kwargs):
-        login = request.query_params.get('login')
+        queryset = self.filter_queryset(self.get_queryset())
 
-        queryset = self.get_queryset()
-        if login:
-            queryset = queryset.filter(user_access__login=login)
-
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True, context={'request': request})
 
         response = RestResponse(
             status=RestStatus(True, 200, "OK"),
             data=serializer.data
         )
-        return Response(response.to_dict(), status=200)
-    
+        return Response(response.to_dict(), status=status.HTTP_200_OK)
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
@@ -286,5 +305,5 @@ class LikedRealtyViewSet(ModelViewSet):
             "data": {
                 "message": "Removed from favorites"
             }
-        }, status=200)
+        }, status=status.HTTP_200_OK)
 
