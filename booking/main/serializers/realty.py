@@ -16,6 +16,7 @@ class RealtySearchSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False
     )
+    login = serializers.CharField(write_only=True, required=False)
 
 class RealtyCreateSerializer(serializers.ModelSerializer):
     country = serializers.CharField(write_only=True)
@@ -122,14 +123,16 @@ class RealtySerializer(serializers.ModelSerializer):
         )
 
     def get_liked(self, obj):
-        request = self.context.get("request")
-        if not request or not request.query_params.get('user_access_id'):
-            return None
-        user_access_id = request.query_params.get('user_access_id')
-        like_instance = obj.liked_by.filter(user_access_id=user_access_id).first()
-        
+        user_access = self.context.get("user_access")
+        if not user_access:
+            return "error"
+        like_instance = obj.liked_by.filter(
+            user_access=user_access
+        ).first()
+
         if like_instance:
             return LikedRealtySearchSerializer(like_instance).data
+
         return None
 
 

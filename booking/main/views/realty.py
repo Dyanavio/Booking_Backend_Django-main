@@ -209,7 +209,20 @@ def RealtySearchViewSet(request):
 
     queryset = queryset.distinct()
 
-    result = RealtySerializer(queryset, many=True).data
+    user_access = None
+    login = data.get("login")
+
+    if login:
+        user_access = UserAccess.objects.filter(login=login).first()
+
+    result = RealtySerializer(
+        queryset,
+        many=True,
+        context={
+            "request": request,
+            "user_access": user_access
+        }
+    ).data
 
     response = RestResponse(
         status=RestStatus(True, 200, "OK"),
