@@ -261,9 +261,6 @@ class LikedRealtyViewSet(ModelViewSet):
         return LikedRealtySerializer
     
     def get_queryset(self):
-        """
-        Optimized queryset to prevent N+1 issues when serializing the nested Realty.
-        """
         queryset = LikedRealty.objects.select_related(
             'user_access',
             'realty',
@@ -277,8 +274,7 @@ class LikedRealtyViewSet(ModelViewSet):
 
         login = self.request.query_params.get('login')
         if login:
-            queryset = queryset.filter(user_access__login=login)
-            
+            queryset = queryset.filter(user_access__login__iexact=login)
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -294,6 +290,7 @@ class LikedRealtyViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=status.HTTP_201_CREATED)
 
+
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
@@ -305,18 +302,48 @@ class LikedRealtyViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=status.HTTP_200_OK)
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.delete()
 
-        return Response({
-            "status": {
-                "isOk": True,
-                "code": 200,
-                "phrase": "Ok"
-            },
-            "data": {
-                "message": "Removed from favorites"
-            }
-        }, status=status.HTTP_200_OK)
+    def delete(self, request, *args, **kwargs):
+        realty_id = request.data.get('realty_id')
+        user_login = request.data.get('user_login')
+        if not  realty_id or not user_login:
+            return Response({
+                "status": {
+                    "isOk": False,
+                    "code": 401,
+                    "phrase": "Unauthorized"
+                },
+                "data": {
+                    "message": "Missing either Realty Id or user is not signed in"
+                }
+            })
+        
+        liked_realty = LikedRealty.objects.filter(
+            realty_id = realty_id,
+            user_access__login=user_login).first()
+        
+        if liked_realty:
+            liked_realty.delete()
+            return Response({
+                "status": {
+                    "isOk": True,
+                    "code": 200,
+                    "phrase": "Ok"
+                },
+                "data": {
+                    "message": "Removed from favorites"
+                }
+            }, status=status.HTTP_200_OK)
+        
+        else:
+            return Response({
+                "status": {
+                    "isOk": False,
+                    "code": 404,
+                    "phrase": "Not Found"
+                },
+                "data": {
+                    "message": "Liked entry was not found"
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
 

@@ -16,7 +16,7 @@ class RealtySearchSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False
     )
-    login = serializers.CharField(write_only=True, required=False)
+    login = serializers.CharField(write_only=True, required=False, allow_null=True)
 
 class RealtyCreateSerializer(serializers.ModelSerializer):
     country = serializers.CharField(write_only=True)
