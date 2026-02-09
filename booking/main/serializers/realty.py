@@ -249,7 +249,8 @@ class RealtyUpdateSerializer(serializers.ModelSerializer):
     
 
 class LikedRealtySerializer(serializers.ModelSerializer):
-    realty = RealtySerializer(read_only=True)
+    realty = serializers.SerializerMethodField()
+
     user_login = serializers.CharField(
         source='user_access.login',
         read_only=True
@@ -263,6 +264,12 @@ class LikedRealtySerializer(serializers.ModelSerializer):
             'user_login',
             'realty',
         )
+
+    def get_realty(self, obj):
+        return RealtySerializer(
+            obj.realty,
+            context=self.context
+        ).data
 
 
 class LikedRealtyListSerializer(serializers.ModelSerializer):

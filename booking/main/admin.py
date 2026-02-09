@@ -39,3 +39,7 @@ class LikedRealtyAdmin(admin.ModelAdmin):
 class ItemImageAdmin(admin.ModelAdmin):
     list_display = ("id", "image_url", "order", "realty", "realty_id")
 
+@admin.register(BookingItem)
+class BookingItemAdmin(admin.ModelAdmin):
+    list_display = ("id", "realty", "user_access", "start_date", "end_date", "created_at")
+

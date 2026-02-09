@@ -157,6 +157,16 @@ class RealtyViewSet(ModelViewSet):
                 realty=instance
             )
 
+        if 'realty-secondary-images' in request.FILES:
+            for image_file in request.FILES.getlist('realty-secondary-images'):
+                saved_name = storageService.saveItem(image_file)
+                ItemImage.objects.create(
+                    image_url=saved_name,
+                    order=1,
+                    realty=instance
+                )
+                
+
         serializer = RealtySerializer(instance, context={'request': request})
         response = RestResponse(
             status=RestStatus(True, 200, "Ok"),
@@ -261,9 +271,6 @@ class LikedRealtyViewSet(ModelViewSet):
         return LikedRealtySerializer
     
     def get_queryset(self):
-        """
-        Optimized queryset to prevent N+1 issues when serializing the nested Realty.
-        """
         queryset = LikedRealty.objects.select_related(
             'user_access',
             'realty',
@@ -297,7 +304,20 @@ class LikedRealtyViewSet(ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        serializer = self.get_serializer(queryset, many=True, context={'request': request})
+        login = request.query_params.get("login")
+        user_access = None
+
+        if login:
+            user_access = UserAccess.objects.filter(login__iexact=login).first()
+
+        serializer = self.get_serializer(
+            queryset,
+            many=True,
+            context={
+                "request": request,
+                "user_access": user_access
+            }
+        )
 
         response = RestResponse(
             status=RestStatus(True, 200, "OK"),
@@ -305,6 +325,7 @@ class LikedRealtyViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=status.HTTP_200_OK)
 
+    
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.delete()
