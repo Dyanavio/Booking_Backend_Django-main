@@ -284,8 +284,7 @@ class LikedRealtyViewSet(ModelViewSet):
 
         login = self.request.query_params.get('login')
         if login:
-            queryset = queryset.filter(user_access__login=login)
-            
+            queryset = queryset.filter(user_access__login__iexact=login)
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -300,6 +299,7 @@ class LikedRealtyViewSet(ModelViewSet):
             data=read_serializer.data
         )
         return Response(response.to_dict(), status=status.HTTP_201_CREATED)
+
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

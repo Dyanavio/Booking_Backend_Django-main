@@ -6,7 +6,7 @@ from main.serializers.location import CitySerializer
 from main.serializers.booking import BookingItemSerializer
 from django.urls import reverse
 from django.conf import settings
-from main.models import RealtyGroup # Import your group model
+from main.models import RealtyGroup
 
 
 class RealtySearchSerializer(serializers.Serializer):
@@ -16,7 +16,9 @@ class RealtySearchSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False
     )
-    login = serializers.CharField(write_only=True, required=False)
+    login = serializers.CharField(write_only=True, required=False, allow_null=True)
+
+# ----------------------------------------------------------------------------------------
 
 class RealtyCreateSerializer(serializers.ModelSerializer):
     country = serializers.CharField(write_only=True)
@@ -85,6 +87,9 @@ class RealtyCreateSerializer(serializers.ModelSerializer):
         return realty
 
 
+
+# ----------------------------------------------------------------------------------------
+
 class LikedRealtySearchSerializer(serializers.ModelSerializer):
     class Meta:
         model = LikedRealty
@@ -92,6 +97,8 @@ class LikedRealtySearchSerializer(serializers.ModelSerializer):
             'id',
         )
 
+
+# ----------------------------------------------------------------------------------------
 
 class RealtySerializer(serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
@@ -168,6 +175,9 @@ class RealtySerializer(serializers.ModelSerializer):
             "countRate": count
         }).data
 
+
+
+# ----------------------------------------------------------------------------------------
 
 class RealtyUpdateSerializer(serializers.ModelSerializer):
     data = serializers.DictField(write_only=True)
@@ -248,6 +258,8 @@ class RealtyUpdateSerializer(serializers.ModelSerializer):
         return instance
     
 
+# ----------------------------------------------------------------------------------------
+
 class LikedRealtySerializer(serializers.ModelSerializer):
     realty = serializers.SerializerMethodField()
 
@@ -271,6 +283,8 @@ class LikedRealtySerializer(serializers.ModelSerializer):
             context=self.context
         ).data
 
+
+# ----------------------------------------------------------------------------------------
 
 class LikedRealtyListSerializer(serializers.ModelSerializer):
     realty = RealtySerializer(read_only=True) 
