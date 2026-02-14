@@ -1,6 +1,6 @@
 from django.urls import path, include
 from main.views.user import UserViewSet, userDetail, login, register, getUsersTable
-from main.views.realty import RealtyViewSet, item, RealtySearchViewSet, getRealtiesTable, LikedRealtyViewSet
+from main.views.realty import RealtyViewSet, item, cities, RealtySearchViewSet, getRealtiesTable, LikedRealtyViewSet
 from main.views.feedback import FeedbackView
 from main.views.booking import BookingView, BookingDetailView
 from rest_framework.routers import DefaultRouter
@@ -26,7 +26,10 @@ urlpatterns = [
     path('api/booking-item/<uuid:id>', BookingDetailView.as_view(), name='booking_item'),
 
     path('Administrator/GetRealtiesTable', getRealtiesTable, name="getRealtiesTable"),
-    path("Administrator/GetUsersTable", getUsersTable, name='getUsersTable')
+    path("Administrator/GetUsersTable", getUsersTable, name='getUsersTable'),
+
+    path("api/cities/", cities, name="cities"),
+    
 
 ]
 

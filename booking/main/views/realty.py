@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Avg, Count
 from django.db.models.functions import Coalesce
+from django.core.serializers import serialize
 from backend.services import *
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -29,6 +30,15 @@ def item(request, itemId):
         return HttpResponse(content, content_type=mime_type)
     except (FileNotFoundError, ValueError):
         raise Http404("Item not found")
+    
+def cities(request):
+    cities = City.objects.values_list('name', flat=True)
+
+    response = RestResponse(
+            status=RestStatus(True, 200, "Ok"),
+            data = list(cities)
+        )
+    return JsonResponse(response.to_dict(), status=200)
     
 # -----------------------------------------------------------------------------------------------
 
@@ -202,6 +212,9 @@ def RealtySearchViewSet(request):
 
     queryset = Realty.objects.filter(deleted_at__isnull=True)
 
+    if "City" in data and data["City"] != "":
+        queryset = queryset.filter(city__name=data["City"])
+
     if "Price" in data:
         queryset = queryset.filter(price__gte=data["Price"])
 
@@ -216,6 +229,8 @@ def RealtySearchViewSet(request):
 
     if "Rating" in data:
         queryset = queryset.filter(avg_rating__gte=data["Rating"])
+    
+  
 
     queryset = queryset.distinct()
 

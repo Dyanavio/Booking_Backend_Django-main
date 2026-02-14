@@ -16,6 +16,7 @@ class RealtySearchSerializer(serializers.Serializer):
         child=serializers.CharField(),
         required=False
     )
+    City = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
     login = serializers.CharField(write_only=True, required=False, allow_null=True)
 
 # ----------------------------------------------------------------------------------------
