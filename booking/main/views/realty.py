@@ -87,7 +87,14 @@ class RealtyViewSet(ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+
+        try:
+            instance = serializer.save()
+        except:
+            return Response(
+                {"error": "This slug already exists"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         image_file = request.FILES.get("realty-img")
         if not image_file:
@@ -185,7 +192,9 @@ class RealtyViewSet(ModelViewSet):
         return Response(response.to_dict(), status=200)
     
     def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
+        slug = request.data.get('realty-delete-slug')
+        instance = get_object_or_404(Realty, slug=slug)
+
         instance.deleted_at = timezone.now()
         instance.save()
 

@@ -6,6 +6,7 @@ from main.models import *
 from main.serializers.booking import BookingItemSerializer, BookingItemShortSerializer
 from main.filters import BookingItemFilter
 from main.rest import RestResponse, RestStatus
+from django.utils import timezone
 
 
 class BookingView(APIView):
@@ -134,4 +135,27 @@ class BookingDetailView(APIView):
                 serializer.data
             ).to_dict(),
             status=status.HTTP_200_OK
+        )
+    
+    def delete(self, request, id):
+        booking_item = self.get_object(id)
+        
+        if not booking_item:
+            return Response(
+                RestResponse(
+                    RestStatus(False, 404, "Not Found"),
+                    "Booking not found."
+                ).to_dict(),
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        booking_item.deleted_at = timezone.now()
+        booking_item.save()
+
+        return Response(
+            RestResponse(
+                RestStatus(True, 200, "Deleted successfully"),
+                None
+            ).to_dict(),
+            status=status.HTTP_200_OK 
         )
