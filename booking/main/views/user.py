@@ -107,6 +107,7 @@ class UserViewSet(ModelViewSet):
         )
         return Response(response.to_dict(), status=200)
 
+
 @api_view(['GET'])
 def userDetail(request, login: str):
     try:
@@ -137,6 +138,7 @@ def userDetail(request, login: str):
         ).to_dict(),
         status=status.HTTP_200_OK
     )
+
 
 def authenticate(request):
     authorizationHeader = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION')
@@ -169,6 +171,7 @@ def authenticate(request):
         raise KeyError("Authorization credentials rejected: invalid password")
     return userAccess 
 
+
 def login(request):
     if request.method == "OPTIONS":
         return HttpResponse()
@@ -185,7 +188,7 @@ def login(request):
         jti=str(uuid.uuid4()),
         sub=userAccess.id,
         iat=str(now),
-        exp=str(now + 100),
+        exp=str(now + 1000000),
         iss="Booking_WEB",
         aud=str(userAccess.user_role.id),
         user_access=userAccess
@@ -219,33 +222,38 @@ def login(request):
 
 @csrf_exempt
 def register(request):
-    data = json.loads(request.body) # UserSignupFormModel
+    data = json.loads(request.body)
     errors = processSignUpData(data)
     print(errors)
     if errors.__len__() > 0:
-        responseObj = RestResponse(status=RestStatus(False, 400, "Bad Request"), data=data)
-        return JsonResponse(responseObj.to_dict(), safe=False) 
+        responseObj = RestResponse(status=RestStatus(False, 400, "Bad Request"), data={"errors": errors})
+        return JsonResponse(responseObj.to_dict(), status=400, safe=False) 
 
-    responseObj = RestResponse(status=RestStatus(True, 200, "Ok"), data="Registration successful")
-    return JsonResponse(responseObj.to_dict(), safe=False)
+    responseObj = RestResponse(status=RestStatus(True, 201, "Created"), data="Registration successful")
+    return JsonResponse(responseObj.to_dict(), status=201, safe=False)
+
 
 def processSignUpData(model: Any) -> Dict[str, str]:
     errors:Dict[str, str] = {}
     
-    if not model["userFirstName"]:
+    if not model.get("userFirstName"):
         errors["userFirstName"] = "First Name must not be empty!"
         
-    if not model["userLastName"]:
+    if not model.get("userLastName"):
         errors["userLastName"] = "Last Name must not be empty!"
         
-    if not model["userEmail"]:
+    if not model.get("userEmail"):
         errors["userEmail"] = "Email must not be empty!"
         
-    if not model["userLogin"]:
+    if not model.get("userLogin"):
         errors["userLogin"] = "Login must not be empty!"
     elif ":" in model["userLogin"]:
         errors["userLogin"] = "Login must not contain ':'!"
-    if not model["userPassword"]:
+    
+    if UserAccess.objects.filter(login__iexact=model.get("userLogin")).exists():
+        errors["userLogin"] = "Login already exists"
+
+    if not model.get("userPassword"):
         errors["userPassword"] = "Password cannot be empty"
         errors["userRepeat"] = "Invalid original password"
     elif not passwordRegex.match(model["userPassword"]):
@@ -254,20 +262,22 @@ def processSignUpData(model: Any) -> Dict[str, str]:
             "upper case letters, at least one number and at least one special character"
         )
         errors["userRepeat"] = "Invalid original password"
-    elif model["userRepeat"] != model["userPassword"]:
+    elif model.get("userRepeat") != model.get("userPassword"):
         errors["userRepeat"] = "Passwords must match"
-    if not model["agree"]:
+        
+    if not model.get("agree"):
         errors["agree"] = "You must agree with policies!"
     if errors:
         return errors
     
+
     user_id = uuid.uuid4()
     user_data = UserData(
         id = user_id,
         first_name = model["userFirstName"],
         last_name = model["userLastName"],
         email = model["userEmail"],
-        birth_date = model["birthdate"],
+        birth_date = model["birthdate"] if model["birthdate"] else None,
         registered_at = datetime.datetime.now(), 
     )
     salt = randomService.otp(12)
@@ -277,17 +287,16 @@ def processSignUpData(model: Any) -> Dict[str, str]:
         login = model["userLogin"],
         salt = salt,
         dk = kdfService.dk(model["userPassword"], salt),
-        user_role = UserRole.objects.get(id="self_registered"),
+        user_role = UserRole.objects.get(id="SelfRegistered"),
         user_data = user_data
     )
 
     try:
         user_data.save()
         user_access.save()
-        #self._user_data_accessor.create_async(user_data)
-        #self._user_access_accessor.create_async(user_access)
     except Exception as e:
-        errors["user_login"] = "Login already exists"
+        print(e)
+        errors["general"] = "Internal server error occured "
     return errors
 
 

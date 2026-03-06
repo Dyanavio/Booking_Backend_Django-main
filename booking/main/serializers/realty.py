@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from main.models import *
-#from main.serializers.user import UserDataSerializer
 from main.serializers.feeedback import FeedbackSerializer, AccRatesSerializer
 from main.serializers.location import CitySerializer
 from main.serializers.booking import BookingItemSerializer

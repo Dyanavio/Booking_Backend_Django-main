@@ -43,8 +43,6 @@ def cities(request):
 # -----------------------------------------------------------------------------------------------
 
 class RealtyViewSet(ModelViewSet):
-    #slug like id to requests
-    #lookup_field = 'slug'
     queryset = Realty.objects.filter(deleted_at__isnull=True)
     filter_backends = [DjangoFilterBackend]
     filterset_class = RealtyFilter
@@ -272,7 +270,7 @@ def getRealtiesTable(request):
     for realty in realties:
         if realty.deleted_at is not None:
             continue
-        tableBodyContent +=  f"<tr><td>{realty.name}</td> <td>{realty.description}</td> <td>{realty.slug}</td> <td>{realty.price}</td> <td>{realty.city.country.name}</td> <td>{realty.city.name}</td> <td>{realty.realty_group.name}</td> </tr>"
+        tableBodyContent +=  f"<tr><td>{realty.name}</td> <td>{realty.description[:100] + "..."}</td> <td>{realty.slug}</td> <td>{realty.price}</td> <td>{realty.city.country.name}</td> <td>{realty.city.name}</td> <td>{realty.realty_group.name}</td> </tr>"
         response = RestResponse(
             status=RestStatus(True, 200, "Ok"),
             data = tableBodyContent

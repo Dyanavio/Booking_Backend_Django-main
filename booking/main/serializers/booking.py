@@ -16,7 +16,6 @@ class BookingRealtyNameSerializer(serializers.ModelSerializer):
         )
 
 
-
 class BookingItemShortSerializer(serializers.ModelSerializer):
     realtyId = serializers.ReadOnlyField(source="realty.id")
     startDate = serializers.DateTimeField(source="start_date")
@@ -46,7 +45,6 @@ class BookingItemShortSerializer(serializers.ModelSerializer):
         result = []
 
         for img in obj.realty.images.all():
-            #url = reverse('storageItem', kwargs={'itemId': img.image_url})
             url = img.image_url
 
             if request:

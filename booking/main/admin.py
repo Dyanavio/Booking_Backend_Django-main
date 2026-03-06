@@ -41,5 +41,5 @@ class ItemImageAdmin(admin.ModelAdmin):
 
 @admin.register(BookingItem)
 class BookingItemAdmin(admin.ModelAdmin):
-    list_display = ("id", "realty", "user_access", "start_date", "end_date", "created_at")
+    list_display = ("id", "realty", "user_access", "start_date", "end_date", "created_at", "deleted_at")
 

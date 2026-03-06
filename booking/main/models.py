@@ -1,8 +1,6 @@
 from django.db import models
 import uuid, time
 
-# Create your models here.
-
 class UserRole(models.Model):
     id = models.CharField(
         primary_key=True,

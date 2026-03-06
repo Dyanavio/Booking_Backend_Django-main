@@ -24,11 +24,6 @@ class UserFilter(django_filters.FilterSet):
     user_data = django_filters.UUIDFilter(field_name="user_data__id")
     user_role = django_filters.CharFilter(field_name='user_role__id', lookup_expr='iexact')
 
-    #email = django_filters.CharFilter(
-    #    field_name='user_data__email',
-    #    lookup_expr='icontains'
-    #)
-
     class Meta:
         model = UserAccess
         fields = ['user_data', 'user_role']
